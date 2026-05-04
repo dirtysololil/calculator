@@ -135,6 +135,11 @@ $totalPrice          = $productPrice + $materialsWithMarkup;
 $modx->setPlaceholder($pricePlaceholder, number_format($totalPrice, 0, '.', ' '));
 $modx->setPlaceholder('materialcalc_price_raw', $totalPrice);
 
+// Подменяем базовую цену miniShop2 через placeholder-ы,
+// чтобы msOptionsPrice считал модификации уже от полной цены (товар + материалы).
+$modx->setPlaceholder('price', number_format($totalPrice, 0, '.', ' '));
+$modx->setPlaceholder('price_raw', $totalPrice);
+
 $modx->setPlaceholder('materialcalc_extra_price', number_format($materialsWithMarkup, 0, '.', ' '));
 $modx->setPlaceholder('materialcalc_extra_price_raw', $materialsWithMarkup);
 

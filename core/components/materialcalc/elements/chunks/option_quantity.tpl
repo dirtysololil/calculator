@@ -1,4 +1,4 @@
-<input type="hidden" id="msal_price_original" value="{$_modx->getPlaceholder('price')}" class="msoptionsprice-{$_modx->resource.id}">
+<input type="hidden" id="msal_price_original" value="{$_modx->getPlaceholder('materialcalc_price_raw')|default:($_modx->getPlaceholder('price')|replace:' ':'')}" class="msoptionsprice-{$_modx->resource.id}">
 <input type="hidden" id="msal_hash" value="{$hash}" name="msal_key">
 <input type="hidden" id="msal_show_cost" value="{$show_cost}" name="msal_show_cost">
 {foreach $inputs as $input}

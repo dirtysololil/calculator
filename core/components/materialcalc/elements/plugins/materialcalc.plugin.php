@@ -131,6 +131,37 @@ $recalculateCart = function ($cart) use ($materialCalc, $modx) {
 $eventName = $modx->event->name;
 
 switch ($eventName) {
+
+    case 'OnLoadWebDocument':
+        if (!$modx->resource || $modx->context->key === 'mgr') {
+            break;
+        }
+
+        if ($modx->resource->get('class_key') !== 'msProduct') {
+            break;
+        }
+
+        $productId = (int)$modx->resource->get('id');
+        if ($productId <= 0) {
+            break;
+        }
+
+        $price = $materialCalc->calculate($productId, true);
+        if ($price === null) {
+            break;
+        }
+
+        $price = round((float)$price, 2);
+
+        // Подменяем цену на уровне ресурса ДО рендера страницы,
+        // чтобы miniShop2/msOptionsPrice видели MaterialCalc-цену как базовую.
+        $modx->resource->set('price', $price);
+        $modx->resource->set('new_price', $price);
+        $modx->setPlaceholder('price', number_format($price, 0, '.', ' '));
+        $modx->setPlaceholder('price_raw', $price);
+
+        break;
+
     case 'msOnGetProductPrice':
         $product = $modx->getOption('product', $scriptProperties);
         if ($product) {

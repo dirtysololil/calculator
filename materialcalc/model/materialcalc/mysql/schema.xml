@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Schema definition for the MaterialCalc component. Defines the database
+  structure used to store materials, product-material relations and
+  component settings. This file is processed by xPDO to generate the
+  appropriate model classes for your installation. See the xPDO
+  documentation for further details on schema syntax.
+-->
+<model package="materialcalc" baseClass="xPDOObject" platform="mysql" defaultEngine="InnoDB" version="1.0">
+    <!-- Table storing individual materials -->
+    <object class="MaterialCalcMaterial" table="materialcalc_material" extends="xPDOSimpleObject">
+        <field key="name" dbtype="varchar" precision="255" phptype="string" null="false" default=""/>
+        <field key="price" dbtype="decimal" precision="12,2" phptype="float" null="false" default="0.00"/>
+        <field key="unit" dbtype="varchar" precision="50" phptype="string" null="false" default=""/>
+        <field key="active" dbtype="tinyint" precision="1" phptype="boolean" null="false" default="1"/>
+        <field key="rank" dbtype="int" precision="10" phptype="integer" null="false" default="0"/>
+    </object>
+
+    <!-- Table storing settings for the component. A simple key/value store. -->
+    <object class="MaterialCalcSetting" table="materialcalc_setting" extends="xPDOSimpleObject">
+        <field key="key" dbtype="varchar" precision="100" phptype="string" null="false" default=""/>
+        <field key="value" dbtype="varchar" precision="255" phptype="string" null="false" default=""/>
+        <index alias="key" name="key" primary="false" unique="true" type="BTREE">
+            <column key="key" length="100" collation="A" null="false"/>
+        </index>
+    </object>
+
+    <!-- Link table between products and materials, including the amount used -->
+    <object class="MaterialCalcProductMaterial" table="materialcalc_product_material" extends="xPDOSimpleObject">
+        <field key="product_id" dbtype="int" precision="10" phptype="integer" null="false" default="0"/>
+        <field key="material_id" dbtype="int" precision="10" phptype="integer" null="false" default="0"/>
+        <field key="amount" dbtype="decimal" precision="12,3" phptype="float" null="false" default="1.000"/>
+        <field key="active" dbtype="tinyint" precision="1" phptype="boolean" null="false" default="1"/>
+        <!-- Add indexes to speed up queries -->
+        <index alias="product" name="product" primary="false" unique="false" type="BTREE">
+            <column key="product_id" length="10" collation="A" null="false"/>
+        </index>
+        <index alias="material" name="material" primary="false" unique="false" type="BTREE">
+            <column key="material_id" length="10" collation="A" null="false"/>
+        </index>
+        <!-- Define an aggregate relationship to the Material class -->
+        <aggregate alias="Material" class="MaterialCalcMaterial" local="material_id" foreign="id" cardinality="one" owner="foreign"/>
+    </object>
+</model>

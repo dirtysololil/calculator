@@ -159,7 +159,8 @@
                                     <div class="product_price">
                                         {set $materialcalcExtraRaw = $_modx->getPlaceholder('materialcalc_extra_price_raw')|default:0}
                                         {set $materialcalcProductRaw = $_modx->getPlaceholder('materialcalc_product_price_raw')|default:($price|replace:' ':'')}
-                                        <span class="product_base-price msoptionsprice-cost msoptionsprice-{$_modx->resource.id}" id="price" data-materialcalc-price="{$materialcalcPrice}" data-materialcalc-extra="{$materialcalcExtraRaw}" data-materialcalc-product-base="{$materialcalcProductRaw}">
+                                        <span id="msoptions-base-price" class="msoptionsprice-cost msoptionsprice-{$_modx->resource.id}" style="display:none">{$price}</span>
+                                        <span class="product_base-price" id="price" data-materialcalc-extra="{$materialcalcExtraRaw}" data-materialcalc-product-base="{$materialcalcProductRaw}">
                                             {if $materialcalcPrice}
                                                 {$materialcalcPrice}
                                             {else}
@@ -172,62 +173,15 @@
                                             <div class="old_price__prod">{$_modx->resource['old_price']}₽</div>
                                         {/if}
                                     </div>
-                                    <div class="cheaper d-flex row">
-                                        <img src="/assets/rinaf/assets/orgplex/img/cursor-click.svg" alt="Курсор" width="19" height="19" style="margin-right:10px">
-                                        <div class="align-items-end"><a class="js-modal-show" data-target="#deshevle"data-target="#cheep">Нашли дешевле?</a>
-                                        <p style="font-size:11px">Давайте обсудим цену</p></div>
-                                    </div>
-                                    [[*parent:is=`2727`:then=`
-                                            <div class="number xdrx">
-                                                <span class="minus">-</span>
-                                                <input min="20" placeholder="minprice" type="number" name="count"  class="xds" placeholder="20 min"  value="20" id="product_price1" data-units="шт."/>
-                                            	<span class="plus">+</span>
-                                            </div>
-                                        `:else=`
-                                        <div class="ui-quantity"> 
-                                            <button type="button" class="ui-quantity__btn ui-quantity__minus">
-                                                <svg class="minus plus">
-                                                    <use xlink:href="{'!getFileVersion' | snippet : [ 'path' => 'orgplex/img/symbol/sprite.svg#icons--ic-minus']}"></use>
-                                                </svg>
-                                            </button>
-                                                <input type="text" name="count"   value="1 шт." id="product_price" data-units="шт.">
-                                            <button type="button" class="ui-quantity__btn ui-quantity__plus">
-                                                <svg class="plus">
-                                                    <use xlink:href="{'!getFileVersion' | snippet : [ 'path' => 'orgplex/img/symbol/sprite.svg#icons--ic-plus']}"></use>
-                                                </svg>
-                                            </button>
-                                        </div>`
-                                    ]]
-                                    <div class="product_buy">
-                                        <button type="submit" class="btn_cart  btn btn-primary" name="ms2_action" value="cart/add">
-                                            В корзину 
-                                        </button>
-                                        <div class="price_info">Данная цена указана розничная. При оптовом заказе, уточняйте цену у менеджера.</div>
-                                    </div>
-                                </div>
-                                <div class="preim_zone">
-                                    <div class="preim_zone_item">
-                                        <svg class="ic3">
-                                            <use xlink:href="assets/rinaf/assets/orgplex/img/symbol/sprite.svg#icons--3d"></use>
-                                        </svg>
-                                        <span>Изготовление пробных образцов</span>
-                                    </div>
-                                    <div class="preim_zone_item">
-                                        <svg class="ic3">
-                                            <use xlink:href="assets/rinaf/assets/orgplex/img/symbol/sprite.svg#icons--industrial-robot"></use>
-                                        </svg>
-                                        <span>Европейские технологии производства</span>
-                                    </div>
-                                </div>
-                            </div>
+
                         <script>
                             (function () {
                                 var priceNode = document.getElementById('price');
-                                if (!priceNode) return;
+                                var baseNode = document.getElementById('msoptions-base-price');
+                                if (!priceNode || !baseNode) return;
 
                                 var extra = parseFloat(String(priceNode.dataset.materialcalcExtra || '0').replace(',', '.')) || 0;
-                                var baseFallback = parseFloat(String(priceNode.dataset.materialcalcProductBase || '0').replace(',', '.')) || 0;
-                                var lock = false;
+                                var fallbackBase = parseFloat(String(priceNode.dataset.materialcalcProductBase || '0').replace(',', '.')) || 0;
 
                                 function parsePrice(text) {
                                     if (!text) return 0;
@@ -240,29 +194,20 @@
                                     return new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 0}).format(value);
                                 }
 
-                                function applyMaterialExtra(basePrice) {
-                                    var safeBase = (typeof basePrice === 'number' && !isNaN(basePrice)) ? basePrice : baseFallback;
-                                    var total = Math.max(0, safeBase + extra);
-                                    lock = true;
-                                    priceNode.textContent = formatPrice(total);
-                                    setTimeout(function () { lock = false; }, 0);
+                                function refreshTotal() {
+                                    var base = parsePrice(baseNode.textContent);
+                                    if (!base) {
+                                        base = fallbackBase;
+                                    }
+                                    priceNode.textContent = formatPrice(Math.max(0, base + extra));
                                 }
 
-                                applyMaterialExtra(baseFallback);
-
-                                var observer = new MutationObserver(function () {
-                                    if (lock) return;
-                                    var current = parsePrice(priceNode.textContent);
-                                    applyMaterialExtra(current);
-                                });
-
-                                observer.observe(priceNode, {childList: true, subtree: true, characterData: true});
+                                refreshTotal();
+                                new MutationObserver(refreshTotal).observe(baseNode, {childList: true, subtree: true, characterData: true});
 
                                 document.addEventListener('change', function (e) {
                                     if (e.target && e.target.name && e.target.name.indexOf('options[') === 0) {
-                                        setTimeout(function () {
-                                            applyMaterialExtra(parsePrice(priceNode.textContent));
-                                        }, 30);
+                                        setTimeout(refreshTotal, 50);
                                     }
                                 });
                             })();

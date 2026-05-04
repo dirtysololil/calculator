@@ -157,7 +157,7 @@
                                 <div class="product-buys">
                                     {set $materialcalcPrice = $_modx->getPlaceholder('materialcalc_price')}
                                     <div class="product_price">
-                                        <span class="product_base-price{if !$materialcalcPrice} msoptionsprice-cost msoptionsprice-{$_modx->resource.id}{/if}" id="price" data-materialcalc-price="{$materialcalcPrice}">
+                                        <span class="product_base-price msoptionsprice-cost msoptionsprice-{$_modx->resource.id}" id="price" data-ms2-price="{$price|replace:' ':''}" data-materialcalc-price="{$materialcalcPrice}" data-materialcalc-price-raw="{$_modx->getPlaceholder('materialcalc_price_raw')|default:($price|replace:' ':'')}">
                                             {if $materialcalcPrice}
                                                 {$materialcalcPrice}
                                             {else}
@@ -392,4 +392,5 @@
   }
 }
 </script>
+<script src="/assets/components/materialcalc/js/web/materialcalc-msop.js?v=1"></script>
 {/block}

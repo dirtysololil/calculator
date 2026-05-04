@@ -157,7 +157,9 @@
                                 <div class="product-buys">
                                     {set $materialcalcPrice = $_modx->getPlaceholder('materialcalc_price')}
                                     <div class="product_price">
-                                        <span class="product_base-price{if !$materialcalcPrice} msoptionsprice-cost msoptionsprice-{$_modx->resource.id}{/if}" id="price" data-materialcalc-price="{$materialcalcPrice}">
+                                        {set $materialcalcExtraRaw = $_modx->getPlaceholder('materialcalc_extra_price_raw')|default:0}
+                                        {set $materialcalcProductRaw = $_modx->getPlaceholder('materialcalc_product_price_raw')|default:($price|replace:' ':'')}
+                                        <span class="product_base-price msoptionsprice-cost msoptionsprice-{$_modx->resource.id}" id="price" data-materialcalc-price="{$materialcalcPrice}" data-materialcalc-extra="{$materialcalcExtraRaw}" data-materialcalc-product-base="{$materialcalcProductRaw}">
                                             {if $materialcalcPrice}
                                                 {$materialcalcPrice}
                                             {else}
@@ -218,6 +220,53 @@
                                     </div>
                                 </div>
                             </div>
+                        <script>
+                            (function () {
+                                var priceNode = document.getElementById('price');
+                                if (!priceNode) return;
+
+                                var extra = parseFloat(String(priceNode.dataset.materialcalcExtra || '0').replace(',', '.')) || 0;
+                                var baseFallback = parseFloat(String(priceNode.dataset.materialcalcProductBase || '0').replace(',', '.')) || 0;
+                                var lock = false;
+
+                                function parsePrice(text) {
+                                    if (!text) return 0;
+                                    var normalized = String(text).replace(/\s+/g, '').replace(/[^\d.,-]/g, '').replace(',', '.');
+                                    var value = parseFloat(normalized);
+                                    return isNaN(value) ? 0 : value;
+                                }
+
+                                function formatPrice(value) {
+                                    return new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 0}).format(value);
+                                }
+
+                                function applyMaterialExtra(basePrice) {
+                                    var safeBase = (typeof basePrice === 'number' && !isNaN(basePrice)) ? basePrice : baseFallback;
+                                    var total = Math.max(0, safeBase + extra);
+                                    lock = true;
+                                    priceNode.textContent = formatPrice(total);
+                                    setTimeout(function () { lock = false; }, 0);
+                                }
+
+                                applyMaterialExtra(baseFallback);
+
+                                var observer = new MutationObserver(function () {
+                                    if (lock) return;
+                                    var current = parsePrice(priceNode.textContent);
+                                    applyMaterialExtra(current);
+                                });
+
+                                observer.observe(priceNode, {childList: true, subtree: true, characterData: true});
+
+                                document.addEventListener('change', function (e) {
+                                    if (e.target && e.target.name && e.target.name.indexOf('options[') === 0) {
+                                        setTimeout(function () {
+                                            applyMaterialExtra(parsePrice(priceNode.textContent));
+                                        }, 30);
+                                    }
+                                });
+                            })();
+                        </script>
                         </form>
                     </div>
                 </div>
